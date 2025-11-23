@@ -18,6 +18,15 @@
             color: white;
         }
 
+        /* Auth area positioned top-right */
+        #authArea { position: absolute; top: 12px; right: 12px; z-index: 40; }
+        #authArea button { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; }
+        #userInfo { background: rgba(255,255,255,0.08); padding: 6px 10px; border-radius: 6px; }
+
+        /* Game area centered and constrained */
+        #gameArea { width: 100%; display:flex; justify-content:center; align-items:center; }
+        #gameArea .container { margin: 0 auto; }
+
         .container {
             text-align: center;
             max-width: 800px;
@@ -106,10 +115,12 @@
                 transform: scale(1) rotate(0deg);
             }
         }
+        /* Footer fixed and centered at bottom */
+        footer { position: fixed; right: 50%; transform: translateX(50%); bottom: 18px; opacity: 0.9; }
     </style>
 </head>
 <body>
-        <div id="authArea" style="position:absolute;top:12px;left:12px;">
+        <div id="authArea">
             <div id="userInfo" style="display:none;">
                 Signed in as <strong id="userEmail"></strong>
                 <button id="signOutBtn">Sign out</button>
