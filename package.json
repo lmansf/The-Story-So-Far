@@ -1,0 +1,12 @@
+{
+  "name": "the-story-so-far",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --outfile=dist/main.js --minify"
+  },
+  "dependencies": {
+    "firebase": "^12.6.0",
+    "esbuild": "^0.27.0"
+  }
+}

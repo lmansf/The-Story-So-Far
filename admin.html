@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin - Upload Question</title>
+    <style>
+      body { font-family: system-ui, Arial; padding: 20px; max-width: 900px; }
+      label { display:block; margin-top:12px; }
+      input[type=text], input[type=date] { width: 100%; padding:8px; }
+      #status { margin-top:12px; color:#333; }
+    </style>
+  </head>
+  <body>
+    <h1>Admin: Upload Question Folder</h1>
+
+    <label>Question ID (e.g. question_001)
+      <input id="qid" type="text" placeholder="question_001" />
+    </label>
+
+    <label>Title
+      <input id="title" type="text" placeholder="Math puzzle" />
+    </label>
+
+    <label>Release date
+      <input id="releaseDate" type="date" />
+    </label>
+
+    <label>Active
+      <input id="active" type="checkbox" checked />
+    </label>
+
+    <label>Choose folder to upload
+      <input id="folderInput" type="file" webkitdirectory directory multiple />
+    </label>
+
+    <button id="uploadBtn">Upload and Create Document</button>
+
+    <div id="status">Select a folder (containing index.html, style.css, script.js) to upload.</div>
+
+    <script type="module" src="./dist/admin.js"></script>
+  </body>
+</html>
