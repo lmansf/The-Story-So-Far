@@ -14,16 +14,3 @@
     ]
   }
 }
-{
-  "apphosting": {
-    "backendId": "the-story-so-far",
-    "rootDir": "/",
-    "ignore": [
-      "node_modules",
-      ".git",
-      "firebase-debug.log",
-      "firebase-debug.*.log",
-      "functions"
-    ]
-  }
-}
