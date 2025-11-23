@@ -60,10 +60,57 @@
       document.getElementById('status').textContent = 'Saved. Thanks.';
     }
 
-    document.querySelectorAll('.opt').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const v = e.currentTarget.textContent.trim();
-        chooseValue(v);
+    // Require sign-in: disable choices until user is signed in
+    function checkAuthAndInit(){
+      const signArea = document.createElement('div');
+      signArea.style.marginTop = '12px';
+      const signBtn = document.createElement('button');
+      signBtn.textContent = 'Sign in to save answers';
+      signBtn.style.padding = '8px 12px';
+      signBtn.style.borderRadius = '8px';
+      signBtn.style.cursor = 'pointer';
+      signArea.appendChild(signBtn);
+      const container = document.querySelector('.card');
+      container.appendChild(signArea);
+
+      function updateState(){
+        try{
+          const user = window.getCurrentUser ? window.getCurrentUser() : null;
+          if (user){
+            signArea.style.display = 'none';
+            setButtonsDisabled(false);
+          } else {
+            signArea.style.display = '';
+            setButtonsDisabled(true);
+          }
+        }catch(e){
+          console.warn('auth check failed', e);
+          signArea.style.display = '';
+          setButtonsDisabled(true);
+        }
+      }
+
+      signBtn.addEventListener('click', async () => {
+        if (!window.promptSignIn) return window.location.href = 'index.html';
+        const res = await window.promptSignIn();
+        if (res && res.ok) updateState();
+      });
+
+      // poll for auth state (onAuthStateChanged runs inside bundle but pages may not have sign UI)
+      const interval = setInterval(()=>{
+        updateState();
+      }, 300);
+      // initial check
+      updateState();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuthAndInit();
+      document.querySelectorAll('.opt').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const v = e.currentTarget.textContent.trim();
+          chooseValue(v);
+        });
       });
     });
   </script>

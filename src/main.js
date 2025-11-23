@@ -212,4 +212,17 @@ window.logSelection = async function (isDate, selectedDate) {
   return { ok: true };
 };
 
+// Expose small auth helpers for pages that include the bundle
+window.getCurrentUser = function(){ return auth.currentUser; };
+
+window.promptSignIn = async function(){
+  try{
+    await signInWithPopup(auth, provider);
+    return { ok: true };
+  }catch(err){
+    console.error('promptSignIn failed', err);
+    return { ok: false, error: err };
+  }
+};
+
 export {};
