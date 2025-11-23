@@ -90,6 +90,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (signInArea) { signInArea.style.display = ''; }
       if (gameArea) { gameArea.style.display = 'none'; }
       showMessage('Please sign in to play.');
+      // If this page is a question page (not the entry/index), redirect users
+      // back to the index so they sign in before answering.
+      try {
+        const qKey = getQuestionKeyFromPath();
+        if (qKey !== 'question_one') {
+          setTimeout(() => { window.location.href = 'index.html'; }, 200);
+        }
+      } catch (err) {
+        // ignore
+      }
     }
   });
 });
