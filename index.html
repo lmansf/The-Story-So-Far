@@ -183,7 +183,7 @@
             async function selectDate(event) {
                 event.stopPropagation();
                 const dateValue = document.getElementById('dateInput').value;
-        
+
                 if (!dateValue) {
                     alert('Please select a date first');
                     return;
@@ -191,7 +191,8 @@
                 try {
                     const log = await waitForLog();
                     await log(1, dateValue);
-                    alert('Game locked until ' + dateValue);
+                    // after scheduling, continue to the next question flow
+                    window.location.href = 'questiontwo.html';
                 } catch (err) {
                     console.error('Unable to log selection', err);
                     alert('Please sign in first');
