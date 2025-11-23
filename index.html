@@ -109,76 +109,88 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>When does the first question start?</h1>
-        
-        <div class="options" id="options">
-            <div class="option-card" onclick="selectNow()">
-                <h2>Now</h2>
-                <p>Let's begin immediately!</p>
+        <div id="authArea" style="position:absolute;top:12px;left:12px;">
+            <div id="userInfo" style="display:none;">
+                Signed in as <strong id="userEmail"></strong>
+                <button id="signOutBtn">Sign out</button>
             </div>
-            
-            <div class="option-card">
-                <h2>Choose a Date</h2>
-                <p>Schedule for later</p>
-                <input type="date" id="dateInput" onclick="event.stopPropagation()">
-                <button onclick="selectDate(event)">Confirm</button>
+            <div id="signInArea">
+                <button id="signInBtn">Sign in with Google</button>
             </div>
         </div>
-    </div>
 
-    <script>
-        // Show options after 8 seconds
-        setTimeout(() => {
-            document.getElementById('options').classList.add('show');
-        }, 8000);
+        <div id="gameArea" style="width:100%">
+            <div class="container">
+                    <h1>When does the first question start?</h1>
+          
+                    <div class="options" id="options">
+                            <div class="option-card" onclick="selectNow()">
+                                    <h2>Now</h2>
+                                    <p>Let's begin immediately!</p>
+                            </div>
+              
+                            <div class="option-card">
+                                    <h2>Choose a Date</h2>
+                                    <p>Schedule for later</p>
+                                    <input type="date" id="dateInput" onclick="event.stopPropagation()">
+                                    <button onclick="selectDate(event)">Confirm</button>
+                            </div>
+                    </div>
+            </div>
+        </div>
 
-        async function selectNow() {
-            await logSelection(0, null);
-            window.location.href = 'questiontwo.html';
-        }
+        <script type="module" src="./dist/main.js"></script>
 
-        async function selectDate(event) {
-            event.stopPropagation();
-            const dateValue = document.getElementById('dateInput').value;
-            
-            if (!dateValue) {
-                alert('Please select a date first');
-                return;
-            }
-            
-            await logSelection(1, dateValue);
-            alert('Game locked until ' + dateValue);
-            // Optionally redirect or disable access
-        }
+        <script>
+            // Show options after 8 seconds
+            setTimeout(() => {
+                    const opt = document.getElementById('options');
+                    if (opt) opt.classList.add('show');
+            }, 8000);
 
-        async function logSelection(isDate, selectedDate) {
-            try {
-                const response = await fetch('/api/log-selection', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        is_date: isDate,
-                        selected_date: selectedDate
-                    })
+            function waitForLog() {
+                return new Promise((resolve) => {
+                    const check = () => {
+                        if (window.logSelection) return resolve(window.logSelection);
+                        setTimeout(check, 100);
+                    };
+                    check();
                 });
-                
-                if (!response.ok) {
-                    console.error('Failed to log selection');
-                }
-            } catch (error) {
-                console.error('Error logging selection:', error);
             }
-        }
-    </script>
+
+            async function selectNow() {
+                try {
+                    const log = await waitForLog();
+                    await log(0, null);
+                    window.location.href = 'questiontwo.html';
+                } catch (err) {
+                    console.error('Unable to log selection', err);
+                    alert('Please sign in first');
+                }
+            }
+
+            async function selectDate(event) {
+                event.stopPropagation();
+                const dateValue = document.getElementById('dateInput').value;
+        
+                if (!dateValue) {
+                    alert('Please select a date first');
+                    return;
+                }
+                try {
+                    const log = await waitForLog();
+                    await log(1, dateValue);
+                    alert('Game locked until ' + dateValue);
+                } catch (err) {
+                    console.error('Unable to log selection', err);
+                    alert('Please sign in first');
+                }
+            }
+        </script>
 </body>
 </html>
     <footer>
         <p>&copy; 2024 My Website. All rights reserved.</p>
     </footer>
-    <!-- App bundle (built via `npm run build`) -->
-    <script type="module" src="./dist/main.js"></script>
 </body>
 </html>
