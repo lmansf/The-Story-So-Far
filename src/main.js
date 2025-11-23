@@ -72,8 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (gameArea) { gameArea.style.display = ''; }
       showMessage('Signed in as ' + (user.email || user.uid));
 
-      // Load user profile (color scheme) if present
+      // Ensure an accounts document exists with default unanswered responses and load profile (color scheme) if present
       try {
+        await ensureAccountDoc(user);
         const profileRef = docRef(db, 'profiles', user.uid);
         const snap = await getDoc(profileRef);
         if (snap && snap.exists()) {
@@ -81,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (data && data.colorScheme) applyTheme(data.colorScheme);
         }
       } catch (err) {
-        console.warn('Failed to load profile', err);
+        console.warn('Failed to load or create profile/account', err);
       }
     } else {
       // Hide game until signed in
@@ -92,6 +93,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+// Ensure an accounts document exists for the user with default unanswered fields
+async function ensureAccountDoc(user){
+  if (!user || !user.uid) return;
+  try{
+    const accRef = docRef(db, 'accounts', user.uid);
+    const snap = await getDoc(accRef);
+    const defaults = {
+      email: user.email || null,
+      question_one: 'unanswered',
+      question_two: 'unanswered',
+      question_three: 'unanswered',
+      question_four: 'unanswered',
+      updatedAt: serverTimestamp()
+    };
+    if (!snap.exists()){
+      await setDoc(accRef, defaults);
+    } else {
+      // Make sure email is up-to-date and any missing question fields are set to 'unanswered'
+      const existing = snap.data() || {};
+      const toMerge = { email: user.email || existing.email || null, updatedAt: serverTimestamp() };
+      if (!('question_one' in existing)) toMerge.question_one = 'unanswered';
+      if (!('question_two' in existing)) toMerge.question_two = 'unanswered';
+      if (!('question_three' in existing)) toMerge.question_three = 'unanswered';
+      if (!('question_four' in existing)) toMerge.question_four = 'unanswered';
+      await setDoc(accRef, toMerge, { merge: true });
+    }
+  }catch(err){
+    console.warn('ensureAccountDoc failed', err);
+  }
+}
+
+function getQuestionKeyFromPath(){
+  const p = (location.pathname || '').toLowerCase();
+  if (p.endsWith('questionone.html') || p.endsWith('index.html') || p === '/' ) return 'question_one';
+  if (p.endsWith('questiontwo.html')) return 'question_two';
+  if (p.endsWith('questionthree.html')) return 'question_three';
+  if (p.endsWith('questionfour.html')) return 'question_four';
+  // fallback: derive from document.title
+  const t = (document.title || '').toLowerCase();
+  if (t.includes('one')) return 'question_one';
+  if (t.includes('two')) return 'question_two';
+  if (t.includes('three')) return 'question_three';
+  if (t.includes('four')) return 'question_four';
+  return 'question_unknown';
+}
 
 function applyTheme(choice){
   // choice: 'red' or 'blue'
@@ -125,25 +172,44 @@ window.setColorScheme = async function(choice){
 // Expose a global logging function that saves responses tied to the signed-in user
 window.logSelection = async function (isDate, selectedDate) {
   const user = auth.currentUser;
-  if (!user) throw new Error('User not signed in');
+  if (!user) {
+    // If not signed in, we still return a rejected promise so callers can handle it.
+    throw new Error('User not signed in');
+  }
 
-  const questionId = document.title || 'question_one';
-  const doc = {
-    questionId,
-    isDate: !!isDate,
-    selectedDate: selectedDate || null,
+  const questionKey = getQuestionKeyFromPath();
+  // Decide the value to store: prefer explicit selectedDate, else interpret isDate/Now/other
+  let value = null;
+  if (selectedDate) value = selectedDate;
+  else value = (!!isDate) ? 'date' : 'Now';
+
+  const responseDoc = {
+    questionId: questionKey,
+    value,
     userEmail: user.email || null,
     uid: user.uid || null,
     createdAt: serverTimestamp()
   };
 
   try {
-    await addDoc(collection(db, 'responses'), doc);
-    return { ok: true };
+    // write a historical entry into `responses` collection
+    await addDoc(collection(db, 'responses'), responseDoc);
   } catch (err) {
-    console.error('Failed to log response', err);
-    return { ok: false, error: err };
+    console.error('Failed to log response in responses collection', err);
   }
+
+  try{
+    // update the user's accounts doc to store the latest answer per question
+    const accRef = docRef(db, 'accounts', user.uid);
+    const fieldObj = { updatedAt: serverTimestamp() };
+    fieldObj[questionKey] = value || 'unanswered';
+    if (user.email) fieldObj.email = user.email;
+    await setDoc(accRef, fieldObj, { merge: true });
+  }catch(err){
+    console.error('Failed to update account response', err);
+  }
+
+  return { ok: true };
 };
 
 export {};
