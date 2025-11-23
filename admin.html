@@ -14,29 +14,41 @@
   <body>
     <h1>Admin: Upload Question Folder</h1>
 
-    <label>Question ID (e.g. question_001)
-      <input id="qid" type="text" placeholder="question_001" />
-    </label>
+    <div id="authArea">
+      <div id="userInfo" style="display:none; margin-bottom:12px;">
+        Signed in as <strong id="userEmail"></strong>
+        <button id="signOutBtn">Sign out</button>
+      </div>
+      <div id="signInArea">
+        <button id="signInBtn">Sign in with Google</button>
+      </div>
+    </div>
 
-    <label>Title
-      <input id="title" type="text" placeholder="Math puzzle" />
-    </label>
+    <div id="uploader" style="display:none;">
+      <label>Question ID (e.g. question_001)
+        <input id="qid" type="text" placeholder="question_001" />
+      </label>
 
-    <label>Release date
-      <input id="releaseDate" type="date" />
-    </label>
+      <label>Title
+        <input id="title" type="text" placeholder="Math puzzle" />
+      </label>
 
-    <label>Active
-      <input id="active" type="checkbox" checked />
-    </label>
+      <label>Release date
+        <input id="releaseDate" type="date" />
+      </label>
 
-    <label>Choose folder to upload
-      <input id="folderInput" type="file" webkitdirectory directory multiple />
-    </label>
+      <label>Active
+        <input id="active" type="checkbox" checked />
+      </label>
 
-    <button id="uploadBtn">Upload and Create Document</button>
+      <label>Choose folder to upload
+        <input id="folderInput" type="file" webkitdirectory directory multiple />
+      </label>
 
-    <div id="status">Select a folder (containing index.html, style.css, script.js) to upload.</div>
+      <button id="uploadBtn">Upload and Create Document</button>
+    </div>
+
+    <div id="status">Sign in to upload a question folder (index.html, style.css, script.js).</div>
 
     <script type="module" src="./dist/admin.js"></script>
   </body>

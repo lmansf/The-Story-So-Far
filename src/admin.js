@@ -1,6 +1,11 @@
 import { storage, db } from './firebase-init.js';
 import { ref as storageRef, uploadBytes } from 'firebase/storage';
 import { collection, addDoc } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+
+// Configure auth
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
 
 function el(id) { return document.getElementById(id); }
 
@@ -31,8 +36,52 @@ async function createQuestionDoc(docData) {
 document.addEventListener('DOMContentLoaded', () => {
   const uploadBtn = el('uploadBtn');
   const status = el('status');
+  const signInBtn = el('signInBtn');
+  const signOutBtn = el('signOutBtn');
+  const userInfo = el('userInfo');
+  const userEmail = el('userEmail');
+  const signInArea = el('signInArea');
+  const uploader = el('uploader');
+
+  // Auth handlers
+  signInBtn.addEventListener('click', async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error('Sign-in error', err);
+      status.textContent = 'Sign-in failed: ' + (err.message || err);
+    }
+  });
+
+  signOutBtn.addEventListener('click', async () => {
+    await signOut(auth);
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // User signed in
+      userInfo.style.display = '';
+      signInArea.style.display = 'none';
+      uploader.style.display = '';
+      userEmail.textContent = user.email || user.uid;
+      status.textContent = 'Signed in. You may upload question folders.';
+    } else {
+      // Not signed in
+      userInfo.style.display = 'none';
+      signInArea.style.display = '';
+      uploader.style.display = 'none';
+      status.textContent = 'Sign in to upload a question folder (index.html, style.css, script.js).';
+    }
+  });
 
   uploadBtn.addEventListener('click', async () => {
+    // Require auth
+    const user = auth.currentUser;
+    if (!user) {
+      status.textContent = 'You must be signed in to upload.';
+      return;
+    }
+
     const qid = el('qid').value.trim();
     const title = el('title').value.trim();
     const releaseDate = el('releaseDate').value;
@@ -61,7 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
         releaseDate: releaseDate || new Date().toISOString().split('T')[0],
         folderPath,
         active: !!active,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        createdBy: user.email || user.uid
       };
 
       const createdId = await createQuestionDoc(docData);

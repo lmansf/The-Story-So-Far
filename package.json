@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "esbuild src/main.js --bundle --outfile=dist/main.js --minify"
+    "build": "esbuild src/main.js src/admin.js --bundle --outdir=dist --minify --format=esm"
   },
   "dependencies": {
     "firebase": "^12.6.0",
