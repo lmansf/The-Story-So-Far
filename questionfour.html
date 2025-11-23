@@ -16,9 +16,56 @@
 <body>
   <div class="card">
     <h1>Question Four</h1>
-    <p>You've reached the next question. This page respects your chosen color scheme.</p>
-    <p style="margin-top:18px;opacity:0.9">(This is a placeholder — update content as needed.)</p>
+    <p>How many?</p>
+    <div id="choices" style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+      <button class="opt">0</button>
+      <button class="opt">2</button>
+      <button class="opt">5</button>
+      <button class="opt">7</button>
+      <button class="opt">15</button>
+      <button class="opt">25</button>
+    </div>
+    <p id="status" style="margin-top:14px;opacity:0.95"></p>
   </div>
   <script type="module" src="./dist/main.js"></script>
+  <script>
+    function waitForLog(){
+      return new Promise((resolve) => {
+        const check = () => {
+          if (window.logSelection) return resolve(window.logSelection);
+          setTimeout(check, 100);
+        };
+        check();
+      });
+    }
+
+    function setButtonsDisabled(disabled){
+      document.querySelectorAll('.opt').forEach(b => { b.disabled = disabled; b.style.opacity = disabled ? '0.6' : '1'; });
+    }
+
+    async function chooseValue(val){
+      // immediate visual feedback
+      setButtonsDisabled(true);
+      document.getElementById('status').textContent = 'Saving your answer...';
+
+      // fire-and-forget persistence
+      try{
+        const logger = await waitForLog();
+        try{ await logger(false, String(val)); } catch(e){ console.warn('log failed', e); }
+      }catch(e){
+        // log function not available or failed to load
+        console.warn('log unavailable', e);
+      }
+
+      document.getElementById('status').textContent = 'Saved. Thanks.';
+    }
+
+    document.querySelectorAll('.opt').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const v = e.currentTarget.textContent.trim();
+        chooseValue(v);
+      });
+    });
+  </script>
 </body>
 </html>
