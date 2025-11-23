@@ -29,40 +29,47 @@
       <div class="choice" id="redBtn">Red</div>
       <div class="choice" id="blueBtn">Blue</div>
     </div>
-    <div class="note">This choice will become your permanent color scheme. Sign in if prompted.</div>
   </div>
 
-  <script type="module" src="./dist/main.js"></script>
-  <script>
-    function waitForSetter(){
-      return new Promise((resolve) => {
-        const check = () => {
-          if (window.setColorScheme) return resolve(window.setColorScheme);
-          setTimeout(check, 100);
-        };
-        check();
-      });
-    }
-
-    async function choose(color){
-      try{
-        const setter = await waitForSetter();
-        const res = await setter(color);
-        if (res && res.ok) {
-          // give a small visual confirmation then go back to start
-          document.querySelector('.note').textContent = 'Saved — applying theme...';
-          setTimeout(() => { window.location.href = 'index.html'; }, 700);
+    <script type="module" src="./dist/main.js"></script>
+    <script>
+      function applyImmediate(color){
+        const root = document.documentElement;
+        if (!root) return;
+        if (color === 'red'){
+          root.style.setProperty('--bg-start', '#ff5f6d');
+          root.style.setProperty('--bg-end', '#ffc371');
         } else {
-          alert('Failed to save preference. Please ensure you are signed in.');
+          root.style.setProperty('--bg-start', '#667eea');
+          root.style.setProperty('--bg-end', '#764ba2');
         }
-      }catch(err){
-        console.error(err);
-        alert('Please sign in first to save your choice.');
       }
-    }
 
-    document.getElementById('redBtn').addEventListener('click', () => choose('red'));
-    document.getElementById('blueBtn').addEventListener('click', () => choose('blue'));
-  </script>
+      function waitForSetter(){
+        return new Promise((resolve) => {
+          const check = () => {
+            if (window.setColorScheme) return resolve(window.setColorScheme);
+            setTimeout(check, 100);
+          };
+          check();
+        });
+      }
+
+      function choose(color){
+        // Apply visual theme immediately (surprise)
+        applyImmediate(color);
+
+        // Persist in background (fire-and-forget)
+        waitForSetter().then((setter) => {
+          try { setter(color); } catch (e) { console.warn('Persist failed', e); }
+        }).catch(() => {});
+
+        // Move on to question four shortly after applying theme
+        setTimeout(() => { window.location.href = 'questionfour.html'; }, 400);
+      }
+
+      document.getElementById('redBtn').addEventListener('click', () => choose('red'));
+      document.getElementById('blueBtn').addEventListener('click', () => choose('blue'));
+    </script>
 </body>
 </html>
