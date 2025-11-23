@@ -5,12 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Question Three</title>
   <style>
+    :root{
+      --bg-start: #667eea;
+      --bg-end: #764ba2;
+      --button-bg: rgba(255,255,255,0.12);
+      --button-border: rgba(255,255,255,0.18);
+      --accent: #fff;
+    }
     html,body{height:100%;margin:0}
-    body{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#764ba2 0%,#4b6bd6 100%);color:#fff;font-family:system-ui,Segoe UI,Arial,sans-serif}
-    h1{font-size:clamp(24px,6vw,56px);text-align:center;padding:20px}
+    body{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bg-start) 0%,var(--bg-end) 100%);color:var(--accent);font-family:system-ui,Segoe UI,Arial,sans-serif}
+    .wrap{display:flex;flex-direction:column;align-items:center;gap:24px}
+    h1{font-size:clamp(24px,6vw,56px);text-align:center;padding:20px;margin:0}
+    .choices{display:flex;gap:20px}
+    .choice{background:var(--button-bg);border:2px solid var(--button-border);padding:18px 28px;border-radius:12px;cursor:pointer;font-size:1.2rem;color:var(--accent);min-width:140px;text-align:center}
+    .choice:hover{transform:translateY(-4px);transition:transform .18s}
+    .note{opacity:0.9;font-size:0.9rem}
   </style>
 </head>
 <body>
-  <h1>Red or Blue?</h1>
+  <div class="wrap">
+    <h1>Red or Blue?</h1>
+    <div class="choices">
+      <div class="choice" id="redBtn">Red</div>
+      <div class="choice" id="blueBtn">Blue</div>
+    </div>
+    <div class="note">This choice will become your permanent color scheme. Sign in if prompted.</div>
+  </div>
+
+  <script type="module" src="./dist/main.js"></script>
+  <script>
+    function waitForSetter(){
+      return new Promise((resolve) => {
+        const check = () => {
+          if (window.setColorScheme) return resolve(window.setColorScheme);
+          setTimeout(check, 100);
+        };
+        check();
+      });
+    }
+
+    async function choose(color){
+      try{
+        const setter = await waitForSetter();
+        const res = await setter(color);
+        if (res && res.ok) {
+          // give a small visual confirmation then go back to start
+          document.querySelector('.note').textContent = 'Saved — applying theme...';
+          setTimeout(() => { window.location.href = 'index.html'; }, 700);
+        } else {
+          alert('Failed to save preference. Please ensure you are signed in.');
+        }
+      }catch(err){
+        console.error(err);
+        alert('Please sign in first to save your choice.');
+      }
+    }
+
+    document.getElementById('redBtn').addEventListener('click', () => choose('red'));
+    document.getElementById('blueBtn').addEventListener('click', () => choose('blue'));
+  </script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 // Main loader: queries Firestore for unlocked question(s) and loads into an iframe
 import { db, storage, auth } from './firebase-init.js';
-import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp, doc as docRef, getDoc, setDoc } from 'firebase/firestore';
 import { ref as storageRef, getDownloadURL } from 'firebase/storage';
 import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 
@@ -72,7 +72,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (gameArea) { gameArea.style.display = ''; }
       showMessage('Signed in as ' + (user.email || user.uid));
 
-      // Optionally preload content or perform actions requiring auth
+      // Load user profile (color scheme) if present
+      try {
+        const profileRef = docRef(db, 'profiles', user.uid);
+        const snap = await getDoc(profileRef);
+        if (snap && snap.exists()) {
+          const data = snap.data();
+          if (data && data.colorScheme) applyTheme(data.colorScheme);
+        }
+      } catch (err) {
+        console.warn('Failed to load profile', err);
+      }
     } else {
       // Hide game until signed in
       if (userInfo) { userInfo.style.display = 'none'; }
@@ -82,6 +92,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+function applyTheme(choice){
+  // choice: 'red' or 'blue'
+  const root = document.documentElement;
+  if (!root) return;
+  if (choice === 'red'){
+    root.style.setProperty('--bg-start', '#ff5f6d');
+    root.style.setProperty('--bg-end', '#ffc371');
+  } else {
+    // default blue
+    root.style.setProperty('--bg-start', '#667eea');
+    root.style.setProperty('--bg-end', '#764ba2');
+  }
+}
+
+// Allow setting a persistent color scheme for the signed-in user
+window.setColorScheme = async function(choice){
+  const user = auth.currentUser;
+  if (!user) throw new Error('User not signed in');
+  try{
+    const profileRef = docRef(db, 'profiles', user.uid);
+    await setDoc(profileRef, { colorScheme: choice }, { merge: true });
+    applyTheme(choice);
+    return { ok: true };
+  }catch(err){
+    console.error('Failed to set color scheme', err);
+    return { ok: false, error: err };
+  }
+};
 
 // Expose a global logging function that saves responses tied to the signed-in user
 window.logSelection = async function (isDate, selectedDate) {
